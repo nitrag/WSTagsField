@@ -10,7 +10,7 @@ import UIKit
 import WSTagsField
 
 class ViewController: UIViewController {
-
+  
     let tagsField = WSTagsField()
     let anotherField = UITextField()
     let testButton = UIButton(type: .system)
@@ -18,15 +18,47 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .red
+        tagsField.frame = tagsView.bounds
+        tagsView.addSubview(tagsField)
+
         tagsField.placeholder = "Enter a tag"
         tagsField.backgroundColor = .white
         tagsField.frame = CGRect(x: 0, y: 44, width: 200, height: 44)
         tagsField.delegate = self
         view.addSubview(tagsField)
         tagsField.returnKeyType = .next
+        tagsField.delimiter = " "
 
-        // Events
+        tagsField.placeholderAlwayVisible = true
+        tagsField.maxHeight = 100.0
+
+        textFieldEventss()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tagsField.beginEditing()
+    }
+
+    override func viewWillLayoutSubviews() {
+        tagsField.frame = tagsView.bounds
+    }
+
+    @IBAction func touchReadOnly(_ sender: UIButton) {
+        tagsField.readOnly = !tagsField.readOnly
+        sender.isSelected = tagsField.readOnly
+    }
+
+    @IBAction func touchTest(_ sender: UIButton) {
+        tagsField.addTag("test1")
+        tagsField.addTag("test2")
+        tagsField.addTag("test3")
+        tagsField.addTag("test4")
+    }
+}
+
+extension ViewController {
+    fileprivate func textFieldEventss() {
         tagsField.onDidAddTag = { _ in
             print("DidAddTag")
         }
@@ -36,7 +68,7 @@ class ViewController: UIViewController {
         }
 
         tagsField.onDidChangeText = { _, text in
-
+            print("onDidChangeText")
         }
 
         tagsField.onDidBeginEditing = { _ in
@@ -47,7 +79,7 @@ class ViewController: UIViewController {
             print("DidEndEditing")
         }
 
-        tagsField.onDidChangeHeightTo = { sender, height in
+        tagsField.onDidChangeHeightTo = { _, height in
             print("HeightTo \(height)")
         }
 
@@ -58,7 +90,7 @@ class ViewController: UIViewController {
         tagsField.onDidUnselectTagView = { _, tagView in
             print("Unselect \(tagView)")
         }
-
+      
         anotherField.frame = CGRect(x: 0, y: 250, width: 120, height: 44)
         anotherField.backgroundColor = .white
         anotherField.placeholder = "another field"
