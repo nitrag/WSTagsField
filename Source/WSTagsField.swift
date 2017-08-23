@@ -8,8 +8,13 @@
 
 import UIKit
 
-open class WSTagsField: UIScrollView {
-    fileprivate let textField = BackspaceDetectingTextField()
+public enum WSTagAcceptOption {
+    case `return`
+    case comma
+    case space
+}
+
+open class WSTagsField: UIView {
 
     open override var isFirstResponder: Bool {
         guard super.isFirstResponder == false,
@@ -21,6 +26,8 @@ open class WSTagsField: UIScrollView {
 
         return false
     }
+
+    open weak var delegate: UITextFieldDelegate?
 
     open override var tintColor: UIColor! {
         didSet { tagViews.forEach { $0.tintColor = self.tintColor } }
@@ -81,6 +88,91 @@ open class WSTagsField: UIScrollView {
     }
 
     open var spaceBetweenTags: CGFloat = 2.0 {
+        didSet {
+            repositionViews()
+        }
+    }
+    
+    public var keyboardType: UIKeyboardType {
+        get {
+            return textField.keyboardType
+        }
+        
+        set {
+            textField.keyboardType = newValue
+        }
+    }
+    
+    public var returnKeyType: UIReturnKeyType {
+        get {
+            return textField.returnKeyType
+        }
+        set {
+            textField.returnKeyType = newValue
+        }
+    }
+  
+    public var spellCheckingType: UITextSpellCheckingType {
+        get {
+            return textField.spellCheckingType
+        }
+        set {
+            textField.spellCheckingType = newValue
+        }
+    }
+  
+    public var autocapitalizationType: UITextAutocapitalizationType {
+        get {
+            return textField.autocapitalizationType
+        }
+        set {
+            textField.autocapitalizationType = newValue
+        }
+    }
+  
+    public var autocorrectionType: UITextAutocorrectionType {
+        get {
+            return textField.autocorrectionType
+        }
+        set {
+            textField.autocorrectionType = newValue
+        }
+    }
+  
+    public var enablesReturnKeyAutomatically: Bool {
+        get {
+            return textField.enablesReturnKeyAutomatically
+        }
+        set {
+            textField.enablesReturnKeyAutomatically = newValue
+        }
+    }
+  
+    public var text: String? {
+        get {
+            return textField.text
+        }
+        set {
+            textField.text = newValue
+        }
+    }
+
+    open var acceptTagOption: WSTagAcceptOption = .return
+  
+    @available(iOS, unavailable)
+    override open var inputAccessoryView: UIView? {
+        get {
+            return super.inputAccessoryView
+        }
+    }
+
+    open var inputFieldAccessoryView: UIView? {
+        get {
+            return textField.inputAccessoryView
+        }
+        set {
+            textField.inputAccessoryView = newValue
+        }
         didSet { repositionViews() }
     }
 
@@ -96,7 +188,7 @@ open class WSTagsField: UIScrollView {
     open var onDidBeginEditing: ((WSTagsField) -> Void)?
 
     /// Called when the text field should return.
-    open var onShouldReturn: ((WSTagsField) -> Bool)?
+    open var onShouldAcceptTag: ((WSTagsField) -> Bool)?
 
     /// Called when the text field text has changed. You should update your autocompleting UI based on the text supplied.
     open var onDidChangeText: ((WSTagsField, _ text: String?) -> Void)?
@@ -354,6 +446,29 @@ extension WSTagsField {
         set { textField.autocapitalizationType = newValue }
     }
 
+    public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if acceptTagOption == .return && onShouldAcceptTag?(self) ?? true {
+            tokenizeTextFieldText()
+            return true
+        }
+        if let textFieldShouldReturn = delegate?.textFieldShouldReturn, textFieldShouldReturn(textField) {
+            tokenizeTextFieldText()
+            return true
+        }
+        return false
+    }
+
+    public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if acceptTagOption == .comma && string == "," && onShouldAcceptTag?(self) ?? true {
+            tokenizeTextFieldText()
+            return false
+        }
+        if acceptTagOption == .space && string == " " && onShouldAcceptTag?(self) ?? true {
+            tokenizeTextFieldText()
+            return false
+        }
+        return true
+    }
     public var autocorrectionType: UITextAutocorrectionType {
         get { return textField.autocorrectionType }
         set { textField.autocorrectionType = newValue }
